@@ -26,10 +26,9 @@ jobs:
           maven-version: 3.9.6
       - name: Run Tests
         continue-on-error: true
-        run: mvn test -DtargetBrowserName="chrome" -DexecutionAddress="local" -DtargetOperatingSystem="LINUX" -DheadlessExecution="true" -DwhenToTakePageSourceSnapshot="FailuresOnly" -DscreenshotParams_whenToTakeAScreenshot="FailuresOnly" -Dtest="${TESTING_SCOPE}"
+        run: mvn test -DtargetBrowserName="chrome" -DexecutionAddress="local" -DtargetOperatingSystem="LINUX" -DheadlessExecution="true" -DwhenToTakePageSourceSnapshot="FailuresOnly" -DscreenshotParams_whenToTakeAScreenshot="FailuresOnly"
       - name: Upload Allure Report as Artifact
         uses: actions/upload-artifact@v3
         with:
           name: Chrome_Linux_Allure
           path: "allure-report/*_AllureReport.html"
-      - name
