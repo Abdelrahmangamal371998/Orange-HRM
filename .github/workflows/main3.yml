@@ -7,8 +7,7 @@ on:
     - cron: '00 4 * * *'
   workflow_dispatch:
 
-env:
-  TESTING_SCOPE: "%regex[.*Tests.*],com.gizasystems.automationexercise.tests.**.**,com.gizasystems.automationexercise.tests.**"
+
   
 jobs:
   E2E_Chrome_Linux_Test:
