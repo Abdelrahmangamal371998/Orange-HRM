@@ -7,6 +7,10 @@ public class LoginTest {
     private SHAFT.GUI.WebDriver driver;
     private SHAFT.TestData.JSON testData;
 
+
+
+
+
     @Test
     public void testMethod() {
         new LoginPage(driver)
