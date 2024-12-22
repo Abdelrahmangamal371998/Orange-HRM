@@ -5,8 +5,7 @@ on:
     branches:
       - '**' # Triggers for pull requests targeting any branch
 
-env:
-  TESTING_SCOPE: "%regex[.*Tests.*],com.gizasystems.automationexercise.tests.**.**,com.gizasystems.automationexercise.tests.**"
+
   
 jobs:
   E2E_Chrome_Linux_Test:
