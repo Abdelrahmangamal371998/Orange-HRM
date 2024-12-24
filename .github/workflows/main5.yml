@@ -1,14 +1,69 @@
-  Dynamic_Test:
-    name: Run Dynamic Tests
+name: Security Checks
+
+on:
+  pull_request:
+    branches: [master]
+  schedule:
+    - cron: '00 2 * * *' # Runs daily at 2:00 AM UTC
+  workflow_dispatch:
+
+jobs:
+  Dependency_Scan:
+    name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
-    needs: [Dependency_Scan, Static_Code_Security, Secrets_Check, Container_Security]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      - name: Setup Environment
-        run: echo "Test Class Name: ${{ github.event.inputs.testClassName }}"
-      - name: Run Dynamic Tests
-        shell: bash
-        run: |
-          echo "Running tests for class: ${{ github.event.inputs.testClassName }}"
-          mvn test -Dtest="${{ github.event.inputs.testClassName }}"
+      - name: Install Snyk
+        run: curl -sSL https://get.snyk.io | bash
+      - name: Run Snyk Scan
+        run: snyk test
+      - name: Upload Snyk Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: Dependency_Scan_Report
+          path: snyk-results.json
+
+  Static_Code_Security:
+    name: Static Application Security Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Initialize CodeQL Analysis
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ['javascript', 'python', 'java']
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+      - name: Upload CodeQL Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: CodeQL_Report
+          path: codeql-results/
+
+  Secrets_Check:
+    name: Secrets Detection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Run Secrets Scan
+        run: trufflehog filesystem --directory=.
+      - name: Upload Secrets Scan Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: Secrets_Scan_Report
+          path: trufflehog-report.json
+
+  Container_Security:
+    name: Container Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull Docker Image
+        run: docker pull my-docker-image:latest
+      - name: Install Trivy
+        run: curl -fsSL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
+      - name: Run Trivy Scan
+        run: trivy image --format json --output trivy-report.json my-docker-image:latest
+      - nam
