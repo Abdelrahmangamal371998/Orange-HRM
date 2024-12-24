@@ -1,14 +1,14 @@
-name: E2E Tests Custom
+name: Security Checks
 
 on:
   workflow_dispatch:
     inputs:
       testsPath:
         description: 'Path to Tests to be Executed'
-        default: 'path/to/defaultTestData.json'  # Default path if none provided
+        default: 'src/test/java'  # Default path if not provided
 
 jobs:
-  E2E_Test:
+  security_check_ubuntu:
     runs-on: ubuntu-latest
     permissions:
       checks: write
@@ -16,17 +16,81 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup JDK 21
+      - name: Set up Java (JDK 21)
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '21'
 
-      - name: Set up Maven
-        uses: stCarolas/setup-maven@v5
-        with:
-          maven-version: 3.9.6
-
-      - name: Run Tests
+      - name: Install OWASP Dependency-Check
         run: |
-          mvn test -DtestsPath="${{ github.event.inputs.testsPath }}" # Passing testsPath to the Java test
+          curl -LO https://github.com/jeremylong/DependencyCheck/releases/download/v8.3.1/dependency-check-8.3.1-release.zip
+          unzip dependency-check-8.3.1-release.zip -d $HOME/dependency-check
+
+      - name: Run Dependency-Check
+        run: |
+          $HOME/dependency-check/bin/dependency-check.sh --project "MyProject" --scan . --out . --format HTML
+
+      - name: Upload Dependency-Check Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: Dependency-Check-Report
+          path: dependency-check-report.html
+
+  security_check_windows:
+    runs-on: windows-latest
+    permissions:
+      checks: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java (JDK 21)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      - name: Install OWASP Dependency-Check
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/jeremylong/DependencyCheck/releases/download/v8.3.1/dependency-check-8.3.1-release.zip" -OutFile "dependency-check.zip"
+          Expand-Archive -Path "dependency-check.zip" -DestinationPath "$env:USERPROFILE\dependency-check"
+
+      - name: Run Dependency-Check
+        run: |
+          & "$env:USERPROFILE\dependency-check\bin\dependency-check.bat" --project "MyProject" --scan . --out . --format HTML
+
+      - name: Upload Dependency-Check Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: Dependency-Check-Report
+          path: dependency-check-report.html
+
+  security_check_macos:
+    runs-on: macos-latest
+    permissions:
+      checks: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java (JDK 21)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      - name: Install OWASP Dependency-Check
+        run: |
+          curl -LO https://github.com/jeremylong/DependencyCheck/releases/download/v8.3.1/dependency-check-8.3.1-release.zip
+          unzip dependency-check-8.3.1-release.zip -d $HOME/dependency-check
+
+      - name: Run Dependency-Check
+        run: |
+          $HOME/dependency-check/bin/dependency-check.sh --project "MyProject" --scan . --out . --format HTML
+
+      - name: Upload Dependency-Check Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: Dependency-Check-Report
+          path: dependency-check-report.html
