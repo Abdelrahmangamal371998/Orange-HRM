@@ -1,81 +1,56 @@
-name: Security and Build Pipeline
+name: Security Checks
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      testsPath:
+        description: 'Path to Tests to be Executed'
+        default: 'src/test/java'  # Default path if not provided
 
 jobs:
-  build:
+  security_check_ubuntu:
     runs-on: ubuntu-latest
-
+    permissions:
+      checks: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      # Static Code Analysis
+      - name: Set up Java (JDK 21)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      - name: Install .NET 6.0 SDK
+        run: |
+          # Add Microsoft package signing key and feed for Ubuntu 22.04
+          wget https://packages.microsoft.com/config/ubuntu/22.04/prod.list
+          sudo mv prod.list /etc/apt/sources.list.d/microsoft-prod.list
+          curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+          
+          # Update package lists and install dotnet SDK
+          sudo apt-get update
+          sudo apt-get install -y dotnet-sdk-6.0
+
+      - name: Install OWASP Dependency-Check
+        run: |
+          # Download Dependency-Check
+          curl -LO https://github.com/jeremylong/DependencyCheck/releases/download/v8.3.1/dependency-check-8.3.1-release.zip
+          
+          # Unzip it into the home directory
+          unzip dependency-check-8.3.1-release.zip -d $HOME
+
+          # List the contents of the extracted directory for debugging
+          ls -R $HOME/dependency-check
+
       - name: Run Dependency-Check
         run: |
+          # Ensure that the path to the Dependency-Check script is correct
           $HOME/dependency-check/bin/dependency-check.sh --project "MyProject" --scan . --out . --format HTML
 
-      # Run Snyk Security Test (Updated version)
-      - name: Run Snyk Security Test
-        uses: snyk/actions/security-check@v3
+      - name: Upload Dependency-Check Report
+        uses: actions/upload-artifact@v3
         with:
-          snyk_token: ${{ secrets.SNYK_TOKEN }}
-
-      # Run Code Quality and Security Linting
-      - name: Run SpotBugs (Java)
-        run: mvn spotbugs:check
-
-      - name: Run ESLint (JavaScript)
-        run: npx eslint .
-
-      # Secrets Scanning
-      - name: Scan for Secrets using TruffleHog
-        run: |
-          pip install truffleHog
-          truffleHog --regex --since_commit HEAD
-
-      # Dynamic Application Security Testing (DAST)
-      - name: Run OWASP ZAP scan
-        uses: zaproxy/action-full-scan@v0.1.0
-        with:
-          target: 'http://your-app-url'
-
-      # Container Security
-      - name: Scan Docker Image with Trivy
-        run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
-          trivy image --no-progress my-docker-image:latest
-
-      # API Security Testing
-      - name: Run Postman Security Test
-        run: |
-          # Run Postman tests against your API (replace with your collection URL)
-          newman run https://www.getpostman.com/collections/your-collection-id
-
-      # Build and test your application
-      - name: Build and Test
-        run: |
-          # Insert your build and test commands here
-          npm install
-          npm run build
-          npm test
-
-      # If you're using Docker
-      - name: Build Docker Image
-        run: |
-          docker build -t my-docker-image .
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Deploy to production
-        run: |
-          # Insert your deployment commands here
-          kubectl apply -f deployment.yaml
+          name: Dependency-Check-Report
+          path: dependency-check-report.html
