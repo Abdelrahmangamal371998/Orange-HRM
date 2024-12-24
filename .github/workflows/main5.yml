@@ -18,8 +18,9 @@ jobs:
         run: |
           $HOME/dependency-check/bin/dependency-check.sh --project "MyProject" --scan . --out . --format HTML
 
+      # Run Snyk Security Test (Updated version)
       - name: Run Snyk Security Test
-        uses: snyk/actions/scan@v1
+        uses: snyk/actions/security-check@v3
         with:
           snyk_token: ${{ secrets.SNYK_TOKEN }}
 
