@@ -1,0 +1,52 @@
+name: Security Checks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  Dependency_Scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Scan Dependencies
+        run: |
+          curl -sSL https://get.snyk.io | bash
+          snyk test
+
+  Static_Code_Security:
+    name: Static Application Security Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ['javascript', 'python', 'java']
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+  Secrets_Check:
+    name: Secrets Detection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Run Secrets Scan
+        run: trufflehog filesystem --directory=.
+
+  Container_Security:
+    name: Container Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scan Docker Images
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
+          trivy image my-docker-image:latest
