@@ -68,6 +68,7 @@ jobs:
       - name: Setup Environment
         run: echo "Test Class Name: ${{ github.event.inputs.testClassName }}"
       - name: Run Dynamic Tests
+        shell: bash
         run: |
           echo "Running tests for class: ${{ github.event.inputs.testClassName }}"
-          mvn test -Dtest=${{ github.event.inputs.testClassName }}
+          mvn test -Dtest="${{ github.event.inputs.testClassName }}"
