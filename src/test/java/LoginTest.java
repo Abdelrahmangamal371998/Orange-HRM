@@ -8,7 +8,7 @@ public class LoginTest {
     private SHAFT.TestData.JSON testData;
 
     @Test
-    public void testMethod() {
+    private void testMethod() {
         new LoginPage(driver)
                 .login(testData.getTestData("userName"),
                         testData.getTestData("password"))
@@ -16,14 +16,14 @@ public class LoginTest {
     }
 
     @BeforeMethod
-    public void setUp() {
+    private void setUp() {
         driver = new SHAFT.GUI.WebDriver();
         testData = new SHAFT.TestData.JSON("/loginTestData.json");
         driver.browser().navigateToURL("https://opensource-demo.orangehrmlive.com");
     }
 
     @AfterMethod
-    public void tearDown() {
+    private void tearDown() {
         driver.quit();
     }
 }
